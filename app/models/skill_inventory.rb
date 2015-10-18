@@ -2,55 +2,35 @@ require 'yaml/store'
 
 class SkillInventory
 
+  def self.dataset
+    database.from(:skills)
+  end
+
   def self.create(skill)
-    database.transaction do
-      database['skills'] ||= []
-      database['total'] ||= 0
-      database['total'] += 1
-      database['skills'] << { "id" => database['total'], "title" => skill[:title], "description" => skill[:description] }
-    end
+    dataset.insert(skill)
   end
 
   def self.database
-    @database ||= YAML::Store.new("db/skill_inventory")
-  end
-
-  def self.raw_skills
-    database.transaction do
-      database['skills'] || []
+    if ENV["RACK_ENV"] == "test"
+      @database ||= Sequel.sqlite("db/skill_inventory_test.sqlite3")
+    else
+      @database ||= Sequel.sqlite("db/skill_inventory_development.sqlite3")
     end
   end
 
   def self.all
-    raw_skills.map { |data| Skill.new(data) }
-  end
-
-  def self.raw_skill(id)
-    raw_skills.find { |skill| skill["id"] == id }
+    dataset.to_a.map { |data| Skill.new(data) }
   end
 
   def self.find(id)
-    Skill.new(raw_skill(id))
+    Skill.new(dataset.where(:id => id).to_a.first)
   end
 
   def self.update(id, data)
-    database.transaction do
-      target = database['skills'].find { |skill| skill["id"] == id }
-      target["title"] = data[:title]
-      target["description"] = data[:description]
-    end
+    dataset.where(:id => id).update(data)
   end
 
   def self.delete(id)
-    database.transaction do
-      database['skills'].delete_if { |skill| skill["id"] == id }
-    end
-  end
-
-  def self.delete_all
-    database.transaction do
-      database['skills'] = []
-      database['total'] = 0
-    end
+    dataset.where(:id => id).delete
   end
 end

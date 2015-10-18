@@ -10,7 +10,7 @@ class EditSkillTest < FeatureTest
 
     click_link 'Edit'
 
-    assert_equal '/skills/1/edit', current_path
+    assert_equal "/skills/#{SkillInventory.all.first.id}/edit", current_path
 
     fill_in 'skill[title]', with: "Bow Hunting Skills"
     fill_in 'skill[description]', with: "hunting with a bow"

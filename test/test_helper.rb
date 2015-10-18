@@ -6,6 +6,9 @@ require 'minitest/pride'
 require 'capybara'
 require 'tilt/erb'
 
+DatabaseCleaner[:sequel, { :connection => Sequel.sqlite("db/skill_inventory_test.sqlite3") }].strategy = :truncation
+
+
 class Minitest::Test
   def create_skills(num)
     num.times do |i|
@@ -13,9 +16,13 @@ class Minitest::Test
                               :description  => "this is #{i+1} description"})
     end
   end
-  
+
+  def setup
+    DatabaseCleaner.start
+  end
+
   def teardown
-    SkillInventory.delete_all
+    DatabaseCleaner.clean
   end
 end
 
